@@ -1,0 +1,11 @@
+<%- include('layouts/header.ejs') %>
+
+    <img src="/assets/node.png" class="rounded mx-auto d-block mt-5" width="400" hegiht="400" alt="node.js">
+    <% if(isAuthenticated){ %>
+        <h2 class="text-center mt-5 text-success">You Are Logged In</h2>
+    <% }else{ %>
+        <h2 class="text-center mt-5 text-success">Welcome Page</h2>
+    <% } %>
+    
+<%- include('layouts/footer.ejs') %>
+    
