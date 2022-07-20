@@ -1,19 +1,43 @@
-<%- include('../layouts/header.ejs') %>
+<%- include('../layouts/header.ejs') %> 
 
 <form action="/register" method="post" class="w-75 p-3 mx-auto d-block">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <div class="mb-3">
         <label for="exampleInputName1" class="form-label">Name</label>
-        <input type="text" name="name" class="form-control" id="exampleInputName1" required>
+        <input type="text" name="name" class="form-control" id="exampleInputName1" value="<%= oldInput.name %>" required>
     </div>
+
     <div class="mb-3">
       <label for="exampleInputEmail1" class="form-label">Email</label>
-      <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" required>
+      <input class="form-control <%= validationErrors.find(e => e.param === 'email') ? 'invalid' : '' %>"
+        type="email" 
+        name="email"  
+        id="exampleInputEmail1" 
+        aria-describedby="emailHelp"
+        value="<%= oldInput.email %>" 
+        required>
     </div>
+
     <div class="mb-3">
       <label for="exampleInputPassword1" class="form-label">Password</label>
-      <input type="password" name="password" class="form-control" id="exampleInputPassword1" required>
+      <input class="form-control <%= validationErrors.find(e => e.param === 'password') ? 'invalid' : '' %>"
+        type="password" 
+        name="password"  
+        id="exampleInputPassword1" 
+        value="<%= oldInput.password %>"
+        required>
     </div>
+
+    <div class="mb-3">
+      <label for="exampleInputPasswordConfirm1" class="form-label">Confirm Password</label>
+      <input class="form-control <%= validationErrors.find(e => e.param === 'confirmPassword') ? 'invalid' : '' %>"
+        type="password" 
+        name="confirmPassword"  
+        id="exampleInputPasswordConfirm1" 
+        value="<%= oldInput.confirmPassword %>"
+        required>
+    </div>
+
     <button type="submit" class="btn btn-primary">Register</button>
     <% if(errorMessage != null){ %>
       <p class="alert alert-danger mt-4" role="alert"><%= errorMessage %></p>

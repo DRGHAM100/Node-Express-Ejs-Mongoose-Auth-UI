@@ -1,5 +1,6 @@
 const User = require('../../../Models/User');
 const bcrypt = require('bcryptjs');
+const { validationResult } = require('express-validator/check');
 
 exports.getLoginForm = (req,res,next) => {
     if(req.session.isLoggedIn)
@@ -12,7 +13,15 @@ exports.getLoginForm = (req,res,next) => {
     else 
         message = null;
     
-    res.render('Auth/login.ejs',{pageTitle: 'Login Page',errorMessage: message});
+    res.render('Auth/login.ejs',{
+        pageTitle: 'Login Page',
+        errorMessage: message,
+        oldInput: {
+          email: '',
+          password: ''
+        },
+        validationErrors: []
+      });
 }
 
 exports.getRegisterForm = (req,res,next) => {
@@ -26,18 +35,51 @@ exports.getRegisterForm = (req,res,next) => {
     else 
         message = null;
     
-    res.render('Auth/register.ejs',{pageTitle: 'Register Page',errorMessage: message});
+    res.render('Auth/register.ejs',{
+      pageTitle: 'Register Page',
+      errorMessage: message,
+      oldInput: {
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      },
+      validationErrors: []
+    });
 }
 
 
 exports.postLogin = (req,res,next) => {
     const email = req.body.email;
     const password = req.body.password;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render('auth/login', {
+        path: '/login',
+        pageTitle: 'Login',
+        errorMessage: errors.array()[0].msg,
+        oldInput: {
+          email: email,
+          password: password
+        },
+        validationErrors: errors.array()
+      });
+    }
+
+
     User.findOne({ email: email })
       .then(user => {
         if (!user) {
-          req.flash('error', 'Invalid email or password.');
-          return res.redirect('/login');
+          return res.status(422).render('auth/login', {
+            path: '/login',
+            pageTitle: 'Login',
+            errorMessage: 'Invalid email or password.',
+            oldInput: {
+              email: email,
+              password: password
+            },
+            validationErrors: []
+          });
         }
         bcrypt
           .compare(password, user.password)
@@ -50,7 +92,16 @@ exports.postLogin = (req,res,next) => {
                 res.redirect('/');
               });
             }
-            res.redirect('/login');
+            return res.status(422).render('auth/login', {
+              path: '/login',
+              pageTitle: 'Login',
+              errorMessage: 'Invalid email or password.',
+              oldInput: {
+                email: email,
+                password: password
+              },
+              validationErrors: []
+            });
           })
           .catch(err => {
             console.log(err);
@@ -65,35 +116,41 @@ exports.postRegister = (req,res,next) => {
     const email = req.body.email;
     const password = req.body.password;
 
-    User.findOne({email: email})
-    .then(user =>{
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.array());
+      return res.status(422).render('auth/register', {
+        path: '/register',
+        pageTitle: 'Register Page',
+        errorMessage: errors.array()[0].msg,
+        oldInput: {
+          name: name,
+          email: email,
+          password: password,
+          confirmPassword: req.body.confirmPassword
+        },
+        validationErrors: errors.array()
+      });
+    }
 
-        if(user){
-            req.flash('error', 'Email already used by another user !');
-            return res.redirect('/register');
-        }
-
-        return bcrypt.hash(password,12)
-        .then(hashedPassword => {
-            const newUser = new User({
-                name: name,
-                email: email,
-                password: hashedPassword,
-                isAdmin: 0
-            });
-
-            newUser.save();
-       
-            res.redirect('/login');
-        });
-       
-        
-
-
+    bcrypt
+    .hash(password, 12)
+    .then(hashedPassword => {
+      const user = new User({
+        name: name,
+        email: email,
+        password: hashedPassword,
+        isAdmin: 0
+      });
+      return user.save();
     })
-    .catch(err =>{
-        console.log(err);
+    .then(result => {
+      res.redirect('/login');
     })
+    .catch(err => {
+      console.log(err);
+    });
+       
 }
 
 
